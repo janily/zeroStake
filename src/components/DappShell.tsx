@@ -55,7 +55,7 @@ export function DappShell() {
                   <button
                     className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-moss disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={wallet.loading}
-                    onClick={() => void wallet.connect()}
+                    onClick={() => void (wallet.isConnected ? wallet.refresh() : wallet.connect())}
                     type="button"
                   >
                     {wallet.isConnected ? shortAddress(wallet.account) : "Connect Wallet"}
@@ -95,7 +95,7 @@ export function DappShell() {
                   <button
                     className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-ink hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={wallet.loading}
-                    onClick={() => void wallet.connect()}
+                    onClick={() => void (wallet.isConnected ? wallet.refresh() : wallet.connect())}
                     type="button"
                   >
                     {wallet.isConnected ? "Refresh wallet" : "Connect wallet"}
@@ -107,6 +107,16 @@ export function DappShell() {
                       type="button"
                     >
                       Switch to Sepolia
+                    </button>
+                  ) : null}
+                  {wallet.isConnected ? (
+                    <button
+                      className="rounded-2xl border border-white/20 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={wallet.loading}
+                      onClick={() => void wallet.disconnect()}
+                      type="button"
+                    >
+                      Disconnect wallet
                     </button>
                   ) : null}
                 </div>
