@@ -2,7 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { parseEther } from "ethers";
-import { getSigner, getStakeContract } from "@/lib/ethers";
+import type { Eip1193Provider } from "@janily/walletbridgekit";
+import { getBrowserProviderFromWallet, getStakeContract } from "@/lib/ethers";
 import { toReadableError } from "@/lib/errors";
 import type { TxState } from "@/types/stake";
 
@@ -43,14 +44,15 @@ const labels = {
   failed: "Transaction failed",
 };
 
-export function useStakeActions(onSuccess?: () => Promise<void> | void) {
+export function useStakeActions(walletProvider?: Eip1193Provider, onSuccess?: () => Promise<void> | void) {
   const [tx, setTx] = useState<TxState>({ status: "idle", label: labels.idle });
 
   const execute = useCallback(
     async (runner: (contract: StakeActionContract) => Promise<{ hash?: string; wait(): Promise<unknown> }>) => {
       setTx({ status: "validating", label: labels.validating });
       try {
-        const signer = await getSigner();
+        if (!walletProvider) throw new Error("Connect a wallet first");
+        const signer = await getBrowserProviderFromWallet(walletProvider).getSigner();
         const contract = getStakeContract(signer) as unknown as StakeActionContract;
         setTx({ status: "waiting_wallet", label: labels.waiting_wallet });
         const transaction = await runner(contract);
@@ -64,7 +66,7 @@ export function useStakeActions(onSuccess?: () => Promise<void> | void) {
         throw error;
       }
     },
-    [onSuccess],
+    [onSuccess, walletProvider],
   );
 
   return useMemo(

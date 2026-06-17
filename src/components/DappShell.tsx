@@ -1,22 +1,28 @@
 "use client";
 
-import { ChainSwitcher, WalletConnectButton, WalletStatus } from "@janily/walletbridgekit";
+import { ChainSwitcher, WalletConnectButton, WalletStatus, useBalance, useSwitchChain, useWallet } from "@janily/walletbridgekit";
 import { ArrowSquareOut, PlugsConnected, WarningCircle } from "@phosphor-icons/react";
 import { ActionPanel } from "@/components/ActionPanel";
 import { MetricStrip } from "@/components/MetricStrip";
 import { PoolPanel } from "@/components/PoolPanel";
 import { TransactionStatus } from "@/components/TransactionStatus";
 import { STAKE_ADDRESS } from "@/contracts/addresses";
-import { useInjectedWallet } from "@/hooks/useInjectedWallet";
 import { useStakeActions } from "@/hooks/useStakeActions";
 import { useStakeData } from "@/hooks/useStakeData";
+import { SEPOLIA_CHAIN_ID, isSepolia } from "@/lib/chain";
 import { shortAddress } from "@/lib/format";
 
 export function DappShell() {
-  const wallet = useInjectedWallet();
-  const stakeData = useStakeData(wallet.account, wallet.isConnected && wallet.isCorrectNetwork);
-  const actions = useStakeActions(async () => {
-    await Promise.all([wallet.refresh(), stakeData.refresh()]);
+  const wallet = useWallet();
+  const { refreshBalance } = useBalance();
+  const { switchChain } = useSwitchChain();
+  const isConnected = wallet.status === "connected" && Boolean(wallet.address);
+  const isCorrectNetwork = isSepolia(wallet.chainId);
+  const isWalletBusy = ["connecting", "reconnecting", "disconnecting"].includes(wallet.status);
+  const walletBalance = wallet.balance?.value;
+  const stakeData = useStakeData(wallet.address, isConnected && isCorrectNetwork, wallet.provider);
+  const actions = useStakeActions(wallet.provider, async () => {
+    await Promise.all([refreshBalance(), stakeData.refresh()]);
   });
 
   return (
@@ -64,27 +70,29 @@ export function DappShell() {
               <div className="rounded-[1.5rem] border border-ink/10 bg-ink p-4 text-white">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-white/60">Detected account</span>
-                  <span className="font-mono">{shortAddress(wallet.account)}</span>
+                  <span className="font-mono">{shortAddress(wallet.address)}</span>
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3 text-sm">
                   <span className="text-white/60">Network</span>
-                  <span className={wallet.isCorrectNetwork ? "text-white" : "text-rose-200"}>
-                    {wallet.chainId ? (wallet.isCorrectNetwork ? "Sepolia" : `Chain ${wallet.chainId}`) : "-"}
+                  <span className={isCorrectNetwork ? "text-white" : "text-rose-200"}>
+                    {wallet.chainId ? (isCorrectNetwork ? "Sepolia" : `Chain ${wallet.chainId}`) : "-"}
                   </span>
                 </div>
                 <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-1">
                   <button
                     className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-ink hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={wallet.loading}
-                    onClick={() => void wallet.connect()}
+                    disabled={!isConnected}
+                    onClick={() => {
+                      void Promise.all([refreshBalance(), stakeData.refresh()]);
+                    }}
                     type="button"
                   >
-                    {wallet.isConnected ? "Refresh wallet" : "Connect wallet"}
+                    Refresh wallet
                   </button>
-                  {wallet.isConnected && !wallet.isCorrectNetwork ? (
+                  {isConnected && !isCorrectNetwork ? (
                     <button
                       className="rounded-2xl border border-white/20 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10"
-                      onClick={() => void wallet.switchToSepolia()}
+                      onClick={() => void switchChain(Number(SEPOLIA_CHAIN_ID))}
                       type="button"
                     >
                       Switch to Sepolia
@@ -93,10 +101,10 @@ export function DappShell() {
                 </div>
               </div>
 
-              {wallet.error ? (
+              {wallet.error?.message ? (
                 <div className="flex gap-3 rounded-[1.5rem] border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
                   <WarningCircle size={20} weight="duotone" />
-                  <span>{wallet.error}</span>
+                  <span>{wallet.error.message}</span>
                 </div>
               ) : null}
             </div>
@@ -113,8 +121,8 @@ export function DappShell() {
               {stakeData.error ? <p className="text-sm text-rose-700">{stakeData.error}</p> : null}
             </div>
             <MetricStrip
-              balance={wallet.balance}
-              loading={wallet.loading || stakeData.loading}
+              balance={walletBalance}
+              loading={isWalletBusy || stakeData.loading}
               pendingReward={stakeData.data?.pendingReward}
               pendingWithdrawAmount={stakeData.data?.pendingWithdrawAmount}
               requestAmount={stakeData.data?.requestAmount}
@@ -126,13 +134,13 @@ export function DappShell() {
             <PoolPanel data={stakeData.data} loading={stakeData.loading} />
             <div className="space-y-4">
               <ActionPanel
-                balance={wallet.balance}
-                connected={wallet.isConnected}
-                correctNetwork={wallet.isCorrectNetwork}
+                balance={walletBalance}
+                connected={isConnected}
+                correctNetwork={isCorrectNetwork}
                 data={stakeData.data}
                 onClaim={actions.claimReward}
                 onRefresh={async () => {
-                  await Promise.all([wallet.refresh(), stakeData.refresh()]);
+                  await Promise.all([refreshBalance(), stakeData.refresh()]);
                 }}
                 onRequestWithdraw={actions.requestWithdraw}
                 onStake={actions.stakeETH}
