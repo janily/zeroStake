@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useDisconnect } from "@janily/walletbridgekit";
 import { formatEther } from "ethers";
 import { SEPOLIA_CHAIN_ID_HEX, isSepolia, sepoliaChain } from "@/lib/chain";
 import { getBrowserProvider, getEthereum } from "@/lib/ethers";
@@ -45,6 +46,7 @@ async function requestSepoliaSwitch(ethereum: EthereumProvider) {
 }
 
 export function useInjectedWallet() {
+  const { disconnect: disconnectWalletBridge, isDisconnecting } = useDisconnect();
   const [state, setState] = useState<WalletState>({ loading: true });
 
   const refresh = useCallback(async () => {
@@ -88,6 +90,20 @@ export function useInjectedWallet() {
       }));
     }
   }, [refresh]);
+
+  const disconnect = useCallback(async () => {
+    setState((current) => ({ ...current, loading: true, error: undefined }));
+    try {
+      await disconnectWalletBridge();
+      setState({ loading: false });
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        loading: false,
+        error: getWalletErrorMessage(error, "Wallet disconnect failed"),
+      }));
+    }
+  }, [disconnectWalletBridge]);
 
   const switchToSepolia = useCallback(async () => {
     const ethereum = getEthereum();
@@ -136,13 +152,15 @@ export function useInjectedWallet() {
   return useMemo(
     () => ({
       ...state,
+      loading: state.loading || isDisconnecting,
       balanceLabel: state.balance === undefined ? "0" : formatEther(state.balance),
       isConnected: Boolean(state.account),
       isCorrectNetwork: isSepolia(state.chainId),
       connect,
+      disconnect,
       refresh,
       switchToSepolia,
     }),
-    [connect, refresh, state, switchToSepolia],
+    [connect, disconnect, isDisconnecting, refresh, state, switchToSepolia],
   );
 }

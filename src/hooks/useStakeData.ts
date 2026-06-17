@@ -67,7 +67,12 @@ export function useStakeData(account?: string, enabled = false) {
   const [error, setError] = useState<string>();
 
   const refresh = useCallback(async () => {
-    if (!account || !enabled) return;
+    if (!account || !enabled) {
+      setData(undefined);
+      setError(undefined);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(undefined);
     try {
