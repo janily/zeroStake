@@ -1,5 +1,4 @@
 export const SEPOLIA_CHAIN_ID = 11155111n;
-export const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7";
 export const SEPOLIA_EXPLORER_TX = "https://sepolia.etherscan.io/tx/";
 
 export const sepoliaChain = {
@@ -9,9 +8,10 @@ export const sepoliaChain = {
   network: "sepolia",
   nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: ["https://rpc.sepolia.org"],
+  blockExplorerUrls: ["https://sepolia.etherscan.io"],
   blockExplorers: [{ name: "Etherscan", url: "https://sepolia.etherscan.io" }],
 };
 
-export function isSepolia(chainId?: bigint) {
-  return chainId === SEPOLIA_CHAIN_ID;
+export function isSepolia(chainId?: bigint | number) {
+  return chainId === SEPOLIA_CHAIN_ID || chainId === Number(SEPOLIA_CHAIN_ID);
 }
