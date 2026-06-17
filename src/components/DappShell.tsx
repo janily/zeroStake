@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowSquareOut, PlugsConnected, WarningCircle } from "@phosphor-icons/react";
+import { ChainSwitcher, WalletConnectButton, WalletStatus } from "@janily/walletbridgekit";
 import { ActionPanel } from "@/components/ActionPanel";
 import { MetricStrip } from "@/components/MetricStrip";
 import { PoolPanel } from "@/components/PoolPanel";
@@ -13,10 +14,10 @@ import { shortAddress } from "@/lib/format";
 
 export function DappShell() {
   const wallet = useInjectedWallet();
-  const stakeData = useStakeData(wallet.account, wallet.isConnected && wallet.isCorrectNetwork);
+  const stakeData = useStakeData(wallet.account, wallet.isConnected && wallet.isCorrectNetwork, wallet.provider);
   const actions = useStakeActions(async () => {
     await Promise.all([wallet.refresh(), stakeData.refresh()]);
-  });
+  }, wallet.provider);
 
   return (
     <main className="min-h-[100dvh] px-4 py-4 md:px-5 md:py-5">
@@ -51,33 +52,13 @@ export function DappShell() {
             <div className="mt-6 space-y-3">
               <div className="rounded-[1.5rem] border border-ink/10 bg-paper/80 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-ink/45">WalletBridgeKit</p>
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <button
-                    className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-moss disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={wallet.loading}
-                    onClick={() => void (wallet.isConnected ? wallet.refresh() : wallet.connect())}
-                    type="button"
-                  >
-                    {wallet.isConnected ? shortAddress(wallet.account) : "Connect Wallet"}
-                  </button>
-                  <label className="flex items-center gap-2 text-sm text-ink/70">
-                    <span>Network</span>
-                    <select
-                      className="rounded-full border border-ink/10 bg-white px-3 py-2 text-ink outline-none transition hover:border-moss/40 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={wallet.loading}
-                      onChange={(event) => {
-                        if (event.target.value === "sepolia") void wallet.switchToSepolia();
-                      }}
-                      value={wallet.isCorrectNetwork ? "sepolia" : ""}
-                    >
-                      <option value="" disabled>
-                        Select network
-                      </option>
-                      <option value="sepolia">Sepolia</option>
-                    </select>
-                  </label>
+                <div className="mt-3 flex flex-wrap items-center gap-3 [&_button]:rounded-full [&_button]:bg-ink [&_button]:px-4 [&_button]:py-2 [&_button]:text-sm [&_button]:font-semibold [&_button]:text-white [&_button]:transition [&_button:hover]:bg-moss [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-50 [&_select]:rounded-full [&_select]:border [&_select]:border-ink/10 [&_select]:bg-white [&_select]:px-3 [&_select]:py-2 [&_select]:text-ink [&_select]:outline-none">
+                  <WalletConnectButton connectedLabel={(address) => shortAddress(address)} label="Connect Wallet" />
+                  <ChainSwitcher label="Network" />
                 </div>
-                <div className="mt-3 text-sm text-ink/65">Status: {wallet.loading ? "loading" : wallet.isConnected ? "connected" : "idle"}</div>
+                <div className="mt-3 text-sm text-ink/65 [&_*]:text-sm">
+                  <WalletStatus />
+                </div>
               </div>
 
               <div className="rounded-[1.5rem] border border-ink/10 bg-ink p-4 text-white">

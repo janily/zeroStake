@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getBrowserProvider, getStakeContract } from "@/lib/ethers";
+import type { Eip1193Provider } from "@janily/walletbridgekit";
 import type { PoolInfo, StakeData } from "@/types/stake";
 
 type StakeContract = ReturnType<typeof getStakeContract>;
@@ -61,7 +62,7 @@ export async function loadStakeData(account: string, contract: StakeContract): P
   };
 }
 
-export function useStakeData(account?: string, enabled = false) {
+export function useStakeData(account?: string, enabled = false, walletProvider?: Eip1193Provider) {
   const [data, setData] = useState<StakeData>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
@@ -76,7 +77,7 @@ export function useStakeData(account?: string, enabled = false) {
     setLoading(true);
     setError(undefined);
     try {
-      const provider = await getBrowserProvider();
+      const provider = await getBrowserProvider(walletProvider);
       const contract = getStakeContract(provider);
       setData(await loadStakeData(account, contract));
     } catch (err) {
@@ -84,7 +85,7 @@ export function useStakeData(account?: string, enabled = false) {
     } finally {
       setLoading(false);
     }
-  }, [account, enabled]);
+  }, [account, enabled, walletProvider]);
 
   useEffect(() => {
     void refresh();

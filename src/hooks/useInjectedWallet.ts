@@ -1,18 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDisconnect } from "@janily/walletbridgekit";
+import { useCallback, useMemo } from "react";
 import { formatEther } from "ethers";
-import { SEPOLIA_CHAIN_ID_HEX, isSepolia, sepoliaChain } from "@/lib/chain";
-import { getBrowserProvider, getEthereum } from "@/lib/ethers";
-
-interface WalletState {
-  account?: string;
-  chainId?: bigint;
-  balance?: bigint;
-  loading: boolean;
-  error?: string;
-}
+import { useBalance, useConnect, useDisconnect, useSwitchChain, useWallet, type WalletType } from "@janily/walletbridgekit";
+import { SEPOLIA_CHAIN_ID, isSepolia, sepoliaChain } from "@/lib/chain";
 
 function getWalletErrorMessage(error: unknown, fallback: string) {
   const message = error instanceof Error ? error.message : String(error);
@@ -21,146 +12,59 @@ function getWalletErrorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
-async function requestSepoliaSwitch(ethereum: EthereumProvider) {
-  try {
-    await ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }],
-    });
-  } catch (error) {
-    if (!/4902|unrecognized|not added/i.test(String(error))) throw error;
-
-    await ethereum.request({
-      method: "wallet_addEthereumChain",
-      params: [
-        {
-          chainId: SEPOLIA_CHAIN_ID_HEX,
-          chainName: sepoliaChain.name,
-          nativeCurrency: sepoliaChain.nativeCurrency,
-          rpcUrls: sepoliaChain.rpcUrls,
-          blockExplorerUrls: sepoliaChain.blockExplorers.map((explorer) => explorer.url),
-        },
-      ],
-    });
-  }
+function toBigIntChainId(chainId?: number) {
+  return chainId === undefined ? undefined : BigInt(chainId);
 }
 
 export function useInjectedWallet() {
+  const wallet = useWallet();
+  const { balance, refreshBalance, isLoading: isBalanceLoading } = useBalance();
+  const { connect: connectWalletBridge, connectors, isConnecting } = useConnect();
   const { disconnect: disconnectWalletBridge, isDisconnecting } = useDisconnect();
-  const [state, setState] = useState<WalletState>({ loading: true });
-
-  const refresh = useCallback(async () => {
-    const ethereum = getEthereum();
-    if (!ethereum) {
-      setState({ loading: false, error: "Install MetaMask first" });
-      return;
-    }
-
-    try {
-      const provider = await getBrowserProvider();
-      const accounts = await ethereum.request<string[]>({ method: "eth_accounts" });
-      const network = await provider.getNetwork();
-      const account = accounts[0];
-      const balance = account ? await provider.getBalance(account) : undefined;
-      setState({ account, chainId: network.chainId, balance, loading: false });
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: error instanceof Error ? error.message : "Unable to read wallet status",
-      }));
-    }
-  }, []);
+  const { switchChain, isSwitchingChain, error: switchError } = useSwitchChain();
 
   const connect = useCallback(async () => {
-    const ethereum = getEthereum();
-    if (!ethereum) {
-      setState({ loading: false, error: "Install MetaMask first" });
-      return;
-    }
-    setState((current) => ({ ...current, loading: true, error: undefined }));
-    try {
-      await ethereum.request<string[]>({ method: "eth_requestAccounts" });
-      await refresh();
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: getWalletErrorMessage(error, "Wallet connection failed"),
-      }));
-    }
-  }, [refresh]);
+    const connector = connectors.find((item) => item.installed) ?? connectors[0];
+    if (!connector) return;
+    await connectWalletBridge(connector.id as WalletType);
+  }, [connectWalletBridge, connectors]);
 
   const disconnect = useCallback(async () => {
-    setState((current) => ({ ...current, loading: true, error: undefined }));
-    try {
-      await disconnectWalletBridge();
-      setState({ loading: false });
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: getWalletErrorMessage(error, "Wallet disconnect failed"),
-      }));
-    }
+    await disconnectWalletBridge();
   }, [disconnectWalletBridge]);
 
+  const refresh = useCallback(async () => {
+    await refreshBalance();
+  }, [refreshBalance]);
+
   const switchToSepolia = useCallback(async () => {
-    const ethereum = getEthereum();
-    if (!ethereum) {
-      setState({ loading: false, error: "Install MetaMask first" });
-      return;
-    }
+    await switchChain(sepoliaChain.id);
+    await refreshBalance();
+  }, [refreshBalance, switchChain]);
 
-    setState((current) => ({ ...current, loading: true, error: undefined }));
-    try {
-      const accounts = await ethereum.request<string[]>({ method: "eth_accounts" });
-      if (!accounts[0]) {
-        await ethereum.request<string[]>({ method: "eth_requestAccounts" });
-      }
-      await requestSepoliaSwitch(ethereum);
-      await refresh();
-    } catch (error) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: getWalletErrorMessage(error, "Unable to switch to Sepolia"),
-      }));
-    }
-  }, [refresh]);
-
-  useEffect(() => {
-    void refresh();
-    const ethereum = getEthereum();
-    if (!ethereum?.on) return;
-
-    const onAccountsChanged = () => void refresh();
-    const onChainChanged = () => void refresh();
-    const onDisconnect = () => setState({ loading: false });
-
-    ethereum.on("accountsChanged", onAccountsChanged);
-    ethereum.on("chainChanged", onChainChanged);
-    ethereum.on("disconnect", onDisconnect);
-
-    return () => {
-      ethereum.removeListener?.("accountsChanged", onAccountsChanged);
-      ethereum.removeListener?.("chainChanged", onChainChanged);
-      ethereum.removeListener?.("disconnect", onDisconnect);
-    };
-  }, [refresh]);
+  const chainId = toBigIntChainId(wallet.chainId);
+  const error = wallet.error ?? switchError;
+  const loading = isConnecting || isDisconnecting || isSwitchingChain || isBalanceLoading || wallet.status === "reconnecting";
 
   return useMemo(
     () => ({
-      ...state,
-      loading: state.loading || isDisconnecting,
-      balanceLabel: state.balance === undefined ? "0" : formatEther(state.balance),
-      isConnected: Boolean(state.account),
-      isCorrectNetwork: isSepolia(state.chainId),
+      account: wallet.address,
+      accounts: wallet.accounts,
+      chainId,
+      balance: balance?.value,
+      balanceLabel: balance?.value === undefined ? "0" : formatEther(balance.value),
+      loading,
+      error: error ? getWalletErrorMessage(error, error.message) : undefined,
+      provider: wallet.provider,
+      walletType: wallet.walletType,
+      status: wallet.status,
+      isConnected: wallet.status === "connected" && Boolean(wallet.address),
+      isCorrectNetwork: isSepolia(chainId) || wallet.chainId === Number(SEPOLIA_CHAIN_ID),
       connect,
       disconnect,
       refresh,
       switchToSepolia,
     }),
-    [connect, disconnect, isDisconnecting, refresh, state, switchToSepolia],
+    [balance?.value, chainId, connect, disconnect, error, loading, refresh, switchToSepolia, wallet.accounts, wallet.address, wallet.chainId, wallet.provider, wallet.status, wallet.walletType],
   );
 }
