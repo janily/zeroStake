@@ -17,7 +17,7 @@ export function PoolPanel({ data, loading }: { data?: StakeData; loading?: boole
   ];
 
   return (
-    <section className="rounded-[2rem] border border-ink/10 bg-white/72 p-5 shadow-diffusion backdrop-blur md:p-7">
+    <section className="rounded-[2rem] border border-ink/10 bg-white/72 p-5 shadow-diffusion backdrop-blur md:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-moss">Pool</p>
@@ -28,16 +28,16 @@ export function PoolPanel({ data, loading }: { data?: StakeData; loading?: boole
         </div>
       </div>
 
-      <div className="mt-6 divide-y divide-ink/10">
+      <div className="mt-5 divide-y divide-ink/10">
         {rows.map(([label, value]) => (
-          <div key={label} className="grid grid-cols-[1fr_auto] items-center gap-4 py-3 text-sm">
+          <div key={label} className="grid grid-cols-[1fr_auto] items-center gap-4 py-2.5 text-sm">
             <span className="text-ink/55">{label}</span>
             {loading ? <span className="skeleton h-5 w-24 rounded" /> : <span className="font-mono text-ink">{value}</span>}
           </div>
         ))}
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <StatusPill active={Boolean(data?.paused)} icon={<ShieldCheck size={16} />} label="Contract paused" />
         <StatusPill active={Boolean(data?.withdrawPaused)} icon={<ClockCounterClockwise size={16} />} label="Withdraw paused" />
       </div>

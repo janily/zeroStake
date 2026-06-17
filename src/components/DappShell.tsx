@@ -20,10 +20,10 @@ export function DappShell() {
   });
 
   return (
-    <main className="min-h-[100dvh] px-4 py-5 md:px-6 md:py-7">
-      <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-5 xl:grid-cols-[minmax(320px,0.82fr)_minmax(0,1.58fr)]">
-        <aside className="xl:sticky xl:top-7 xl:self-start">
-          <section className="rounded-[2rem] border border-white/70 bg-white/68 p-5 shadow-diffusion backdrop-blur md:p-7">
+    <main className="min-h-[100dvh] px-4 py-4 md:px-5 md:py-5">
+      <div className="mx-auto grid max-w-[1520px] grid-cols-1 gap-4 xl:grid-cols-[minmax(300px,0.72fr)_minmax(0,1.85fr)]">
+        <aside className="xl:sticky xl:top-5 xl:self-start">
+          <section className="rounded-[2rem] border border-white/70 bg-white/68 p-5 shadow-diffusion backdrop-blur md:p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-ink text-white">
@@ -45,11 +45,11 @@ export function DappShell() {
               </a>
             </div>
 
-            <p className="mt-7 max-w-[34ch] text-balance text-4xl font-semibold leading-[0.95] tracking-tight md:text-5xl">
+            <p className="mt-6 max-w-[30ch] text-balance text-4xl font-semibold leading-[1.02] tracking-tight md:text-[2.7rem]">
               Stake Sepolia ETH, request unlocks, claim MetaNode rewards.
             </p>
 
-            <div className="mt-7 space-y-3">
+            <div className="mt-6 space-y-3">
               <div className="rounded-[1.5rem] border border-ink/10 bg-paper/80 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-ink/45">WalletBridgeKit</p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -103,9 +103,9 @@ export function DappShell() {
           </section>
         </aside>
 
-        <div className="space-y-5">
-          <section className="rounded-[2rem] border border-ink/10 bg-white/62 p-5 shadow-diffusion backdrop-blur md:p-7">
-            <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-4">
+          <section className="rounded-[2rem] border border-ink/10 bg-white/62 p-5 shadow-diffusion backdrop-blur md:p-6">
+            <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-moss">Position</p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight">Your staking account</h2>
@@ -122,9 +122,9 @@ export function DappShell() {
             />
           </section>
 
-          <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[0.82fr_1.18fr]">
             <PoolPanel data={stakeData.data} loading={stakeData.loading} />
-            <div className="space-y-5">
+            <div className="space-y-4">
               <ActionPanel
                 balance={wallet.balance}
                 connected={wallet.isConnected}

@@ -75,7 +75,7 @@ export function useStakeData(account?: string, enabled = false) {
       const contract = getStakeContract(provider);
       setData(await loadStakeData(account, contract));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "链上数据读取失败");
+      setError(err instanceof Error ? err.message : "Unable to load on-chain data");
     } finally {
       setLoading(false);
     }

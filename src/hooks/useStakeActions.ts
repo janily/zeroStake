@@ -34,13 +34,13 @@ export async function runClaimReward(contract: StakeActionContract) {
 }
 
 const labels = {
-  idle: "等待操作",
-  validating: "正在校验输入",
-  waiting_wallet: "请在钱包中确认交易",
-  submitted: "交易已提交",
-  confirming: "等待区块确认中",
-  success: "交易成功",
-  failed: "交易失败",
+  idle: "Ready for action",
+  validating: "Validating input",
+  waiting_wallet: "Confirm the transaction in your wallet",
+  submitted: "Transaction submitted",
+  confirming: "Waiting for block confirmation",
+  success: "Transaction successful",
+  failed: "Transaction failed",
 };
 
 export function useStakeActions(onSuccess?: () => Promise<void> | void) {

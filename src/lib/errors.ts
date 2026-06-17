@@ -1,15 +1,15 @@
 export function toReadableError(error: unknown) {
   const raw = extractErrorText(error);
-  if (/user rejected|rejected|denied|4001/i.test(raw)) return "你取消了交易确认";
-  if (/EnforcedPause/i.test(raw)) return "当前合约已暂停";
-  if (/AccessControlUnauthorizedAccount/i.test(raw)) return "当前账户没有权限";
-  if (/SafeERC20FailedOperation/i.test(raw)) return "ERC20 操作失败";
-  if (/FailedCall/i.test(raw)) return "合约调用失败";
+  if (/user rejected|rejected|denied|4001/i.test(raw)) return "You rejected the wallet confirmation";
+  if (/EnforcedPause/i.test(raw)) return "The contract is currently paused";
+  if (/AccessControlUnauthorizedAccount/i.test(raw)) return "The current account is not authorized";
+  if (/SafeERC20FailedOperation/i.test(raw)) return "ERC20 operation failed";
+  if (/FailedCall/i.test(raw)) return "Contract call failed";
   if (/estimateGas|UNPREDICTABLE_GAS_LIMIT|missing revert data/i.test(raw)) {
-    return "当前交易可能无法执行，请检查输入或合约状态";
+    return "This transaction may not execute. Check your input or contract status";
   }
-  if (/Wallet not found/i.test(raw)) return "请先安装 MetaMask 钱包";
-  return raw || "交易失败，请稍后重试";
+  if (/Wallet not found/i.test(raw)) return "Install MetaMask first";
+  return raw || "Transaction failed. Please try again later";
 }
 
 function extractErrorText(error: unknown): string {

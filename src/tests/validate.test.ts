@@ -4,15 +4,15 @@ import { maxStakeAmount, validateEthAmount } from "@/lib/validate";
 
 describe("validateEthAmount", () => {
   it("rejects empty, zero, negative, and invalid input", () => {
-    expect(validateEthAmount({ amount: "" }).error).toBe("请输入数量");
-    expect(validateEthAmount({ amount: "0" }).error).toBe("数量必须大于 0");
-    expect(validateEthAmount({ amount: "-1" }).error).toBe("请输入合法数字");
-    expect(validateEthAmount({ amount: "1.2.3" }).error).toBe("请输入合法数字");
+    expect(validateEthAmount({ amount: "" }).error).toBe("Enter an amount");
+    expect(validateEthAmount({ amount: "0" }).error).toBe("Amount must be greater than 0");
+    expect(validateEthAmount({ amount: "-1" }).error).toBe("Enter a valid number");
+    expect(validateEthAmount({ amount: "1.2.3" }).error).toBe("Enter a valid number");
   });
 
   it("rejects amounts above max and below min", () => {
-    expect(validateEthAmount({ amount: "2", max: parseEther("1") }).error).toBe("钱包余额不足");
-    expect(validateEthAmount({ amount: "0.01", min: parseEther("0.1") }).error).toBe("质押数量低于池子最小要求");
+    expect(validateEthAmount({ amount: "2", max: parseEther("1") }).error).toBe("Insufficient wallet balance");
+    expect(validateEthAmount({ amount: "0.01", min: parseEther("0.1") }).error).toBe("Amount is below the pool minimum");
   });
 
   it("accepts legal values and reserves gas for max stake", () => {

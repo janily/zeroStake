@@ -19,7 +19,7 @@ export function useInjectedWallet() {
   const refresh = useCallback(async () => {
     const ethereum = getEthereum();
     if (!ethereum) {
-      setState({ loading: false, error: "请先安装 MetaMask 钱包" });
+      setState({ loading: false, error: "Install MetaMask first" });
       return;
     }
 
@@ -34,7 +34,7 @@ export function useInjectedWallet() {
       setState((current) => ({
         ...current,
         loading: false,
-        error: error instanceof Error ? error.message : "钱包状态读取失败",
+        error: error instanceof Error ? error.message : "Unable to read wallet status",
       }));
     }
   }, []);
@@ -42,7 +42,7 @@ export function useInjectedWallet() {
   const connect = useCallback(async () => {
     const ethereum = getEthereum();
     if (!ethereum) {
-      setState({ loading: false, error: "请先安装 MetaMask 钱包" });
+      setState({ loading: false, error: "Install MetaMask first" });
       return;
     }
     setState((current) => ({ ...current, loading: true, error: undefined }));
@@ -53,7 +53,7 @@ export function useInjectedWallet() {
       setState((current) => ({
         ...current,
         loading: false,
-        error: /4001|rejected/i.test(String(error)) ? "你取消了钱包连接" : "钱包连接失败",
+        error: /4001|rejected/i.test(String(error)) ? "You rejected the wallet connection" : "Wallet connection failed",
       }));
     }
   }, [refresh]);

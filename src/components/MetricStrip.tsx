@@ -29,19 +29,19 @@ export function MetricStrip({
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
       {metrics.map((metric, index) => {
         const Icon = iconMap[index];
         return (
-          <div key={metric.label} className="border-t border-ink/15 pt-4">
+          <div key={metric.label} className="border-t border-ink/15 pt-3">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-ink/50">
               <Icon size={16} weight="duotone" />
               {metric.label}
             </div>
             {loading ? (
-              <div className="skeleton mt-4 h-8 w-28 rounded" />
+              <div className="skeleton mt-3 h-8 w-28 rounded" />
             ) : (
-              <div className="mt-3 flex items-baseline gap-2">
+              <div className="mt-2 flex items-baseline gap-2">
                 <span className="font-mono text-2xl font-semibold tracking-tight">{metric.value}</span>
                 <span className="text-xs font-medium text-ink/45">{metric.unit}</span>
               </div>
