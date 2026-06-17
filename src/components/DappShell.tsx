@@ -68,7 +68,7 @@ export function DappShell() {
                   <span className="capitalize">{wallet.status}</span>
                 </div>
                 <div className="mt-4 grid grid-cols-1 gap-2">
-                  <div className="[&_button]:w-full [&_button]:rounded-2xl [&_button]:bg-white [&_button]:px-4 [&_button]:py-3 [&_button]:text-sm [&_button]:font-semibold [&_button]:text-ink [&_button]:transition [&_button:hover]:bg-paper [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-50">
+                  <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.045] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] [&_button]:w-full [&_button]:rounded-xl [&_button]:border [&_button]:border-transparent [&_button]:bg-transparent [&_button]:px-4 [&_button]:py-3 [&_button]:text-sm [&_button]:font-semibold [&_button]:text-white/90 [&_button]:transition [&_button:hover]:border-white/10 [&_button:hover]:bg-white/10 [&_button:hover]:text-white [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-50 [&_button+button]:mt-1 [&_button+button]:border-white/10 [&_button+button]:bg-white/[0.06] [&_button+button]:text-white/75 [&_button+button:hover]:bg-white/12 [&_button+button:hover]:text-white">
                     <WalletConnectButton connectedLabel={(address) => shortAddress(address)} label="Connect wallet" />
                   </div>
                   {wallet.isConnected && !wallet.isCorrectNetwork ? (
