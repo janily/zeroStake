@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatEther } from "ethers";
-import { SEPOLIA_CHAIN_ID_HEX, isSepolia } from "@/lib/chain";
+import { SEPOLIA_CHAIN_ID_HEX, isSepolia, sepoliaChain } from "@/lib/chain";
 import { getBrowserProvider, getEthereum } from "@/lib/ethers";
 
 interface WalletState {
@@ -11,6 +11,37 @@ interface WalletState {
   balance?: bigint;
   loading: boolean;
   error?: string;
+}
+
+function getWalletErrorMessage(error: unknown, fallback: string) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/4001|rejected|denied/i.test(message)) return "You rejected the wallet request";
+  if (/4902|unrecognized|not added/i.test(message)) return "Sepolia is not available in your wallet";
+  return fallback;
+}
+
+async function requestSepoliaSwitch(ethereum: EthereumProvider) {
+  try {
+    await ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }],
+    });
+  } catch (error) {
+    if (!/4902|unrecognized|not added/i.test(String(error))) throw error;
+
+    await ethereum.request({
+      method: "wallet_addEthereumChain",
+      params: [
+        {
+          chainId: SEPOLIA_CHAIN_ID_HEX,
+          chainName: sepoliaChain.name,
+          nativeCurrency: sepoliaChain.nativeCurrency,
+          rpcUrls: sepoliaChain.rpcUrls,
+          blockExplorerUrls: sepoliaChain.blockExplorers.map((explorer) => explorer.url),
+        },
+      ],
+    });
+  }
 }
 
 export function useInjectedWallet() {
@@ -53,19 +84,33 @@ export function useInjectedWallet() {
       setState((current) => ({
         ...current,
         loading: false,
-        error: /4001|rejected/i.test(String(error)) ? "You rejected the wallet connection" : "Wallet connection failed",
+        error: getWalletErrorMessage(error, "Wallet connection failed"),
       }));
     }
   }, [refresh]);
 
   const switchToSepolia = useCallback(async () => {
     const ethereum = getEthereum();
-    if (!ethereum) return;
-    await ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }],
-    });
-    await refresh();
+    if (!ethereum) {
+      setState({ loading: false, error: "Install MetaMask first" });
+      return;
+    }
+
+    setState((current) => ({ ...current, loading: true, error: undefined }));
+    try {
+      const accounts = await ethereum.request<string[]>({ method: "eth_accounts" });
+      if (!accounts[0]) {
+        await ethereum.request<string[]>({ method: "eth_requestAccounts" });
+      }
+      await requestSepoliaSwitch(ethereum);
+      await refresh();
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        loading: false,
+        error: getWalletErrorMessage(error, "Unable to switch to Sepolia"),
+      }));
+    }
   }, [refresh]);
 
   useEffect(() => {

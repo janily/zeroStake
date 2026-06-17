@@ -1,6 +1,5 @@
 "use client";
 
-import { ChainSwitcher, WalletConnectButton, WalletStatus } from "@janily/walletbridgekit";
 import { ArrowSquareOut, PlugsConnected, WarningCircle } from "@phosphor-icons/react";
 import { ActionPanel } from "@/components/ActionPanel";
 import { MetricStrip } from "@/components/MetricStrip";
@@ -53,12 +52,32 @@ export function DappShell() {
               <div className="rounded-[1.5rem] border border-ink/10 bg-paper/80 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-ink/45">WalletBridgeKit</p>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <WalletConnectButton />
-                  <ChainSwitcher />
+                  <button
+                    className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-moss disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={wallet.loading}
+                    onClick={() => void wallet.connect()}
+                    type="button"
+                  >
+                    {wallet.isConnected ? shortAddress(wallet.account) : "Connect Wallet"}
+                  </button>
+                  <label className="flex items-center gap-2 text-sm text-ink/70">
+                    <span>Network</span>
+                    <select
+                      className="rounded-full border border-ink/10 bg-white px-3 py-2 text-ink outline-none transition hover:border-moss/40 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={wallet.loading}
+                      onChange={(event) => {
+                        if (event.target.value === "sepolia") void wallet.switchToSepolia();
+                      }}
+                      value={wallet.isCorrectNetwork ? "sepolia" : ""}
+                    >
+                      <option value="" disabled>
+                        Select network
+                      </option>
+                      <option value="sepolia">Sepolia</option>
+                    </select>
+                  </label>
                 </div>
-                <div className="mt-3 text-sm text-ink/65">
-                  <WalletStatus />
-                </div>
+                <div className="mt-3 text-sm text-ink/65">Status: {wallet.loading ? "loading" : wallet.isConnected ? "connected" : "idle"}</div>
               </div>
 
               <div className="rounded-[1.5rem] border border-ink/10 bg-ink p-4 text-white">
