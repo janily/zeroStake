@@ -1,7 +1,8 @@
-import { BrowserProvider, Contract, type ContractRunner } from "ethers";
+import { BrowserProvider, Contract, JsonRpcProvider, type ContractRunner } from "ethers";
 import type { Eip1193Provider } from "@janily/walletbridgekit";
 import { STAKE_ADDRESS } from "@/contracts/addresses";
 import { stakeAbi } from "@/contracts/stakeAbi";
+import { sepoliaChain } from "@/lib/chain";
 
 export function getEthereum() {
   if (typeof window === "undefined") return null;
@@ -12,6 +13,10 @@ export async function getBrowserProvider(provider?: Eip1193Provider | EthereumPr
   const ethereum = provider ?? getEthereum();
   if (!ethereum) throw new Error("Wallet not found");
   return new BrowserProvider(ethereum);
+}
+
+export function getPublicProvider() {
+  return new JsonRpcProvider(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || sepoliaChain.rpcUrls[0], Number(sepoliaChain.id));
 }
 
 export async function getSigner(provider?: Eip1193Provider | EthereumProvider) {

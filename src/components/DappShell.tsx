@@ -15,7 +15,7 @@ import { shortAddress } from "@/lib/format";
 
 export function DappShell() {
   const wallet = useInjectedWallet();
-  const stakeData = useStakeData(wallet.account, wallet.isConnected && wallet.isCorrectNetwork, wallet.provider);
+  const stakeData = useStakeData(wallet.account, wallet.isConnected && wallet.isCorrectNetwork);
   const actions = useStakeActions(async () => {
     await Promise.all([wallet.refresh(), stakeData.refresh()]);
   }, wallet.provider);
