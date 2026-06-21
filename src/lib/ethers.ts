@@ -16,7 +16,12 @@ export async function getBrowserProvider(provider?: Eip1193Provider | EthereumPr
 }
 
 export function getPublicProvider() {
-  return new JsonRpcProvider(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || sepoliaChain.rpcUrls[0], Number(sepoliaChain.id));
+  const rpcUrl =
+    typeof window === "undefined"
+      ? process.env.SEPOLIA_RPC_URL || process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || sepoliaChain.rpcUrls[0]
+      : "/api/rpc";
+
+  return new JsonRpcProvider(rpcUrl, Number(sepoliaChain.id));
 }
 
 export async function getSigner(provider?: Eip1193Provider | EthereumProvider) {
