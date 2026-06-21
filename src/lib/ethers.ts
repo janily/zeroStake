@@ -18,7 +18,7 @@ export async function getBrowserProvider(provider?: Eip1193Provider | EthereumPr
 export function getPublicProvider() {
   const rpcUrl =
     typeof window === "undefined"
-      ? process.env.SEPOLIA_RPC_URL || process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || sepoliaChain.rpcUrls[0]
+      ? process.env.SEPOLIA_RPC_URL || sepoliaChain.rpcUrls[0]
       : `${window.location.origin}/api/rpc`;
 
   return new JsonRpcProvider(rpcUrl, Number(sepoliaChain.id));

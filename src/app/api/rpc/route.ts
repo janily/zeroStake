@@ -1,7 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sepoliaChain } from "@/lib/chain";
 
-const rpcUrl = process.env.SEPOLIA_RPC_URL || process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL || sepoliaChain.rpcUrls[0];
+const fallbackRpcUrls = [
+  "https://ethereum-sepolia-rpc.publicnode.com",
+  "https://sepolia.drpc.org",
+  "https://1rpc.io/sepolia",
+  "https://rpc.sepolia.org",
+];
+
+function getRpcUrls() {
+  return [process.env.SEPOLIA_RPC_URL, ...fallbackRpcUrls].filter((url): url is string => Boolean(url));
+}
+
+function getPayloadId(payload: unknown) {
+  if (Array.isArray(payload)) return null;
+  if (payload && typeof payload === "object" && "id" in payload) return payload.id;
+  return null;
+}
+
+function jsonRpcError(payload: unknown, message: string, status = 502) {
+  return NextResponse.json(
+    {
+      jsonrpc: "2.0",
+      id: getPayloadId(payload),
+      error: { code: -32000, message },
+    },
+    { status },
+  );
+}
 
 export async function POST(request: NextRequest) {
   let payload: unknown;
@@ -9,24 +34,35 @@ export async function POST(request: NextRequest) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON-RPC payload" }, { status: 400 });
+    return jsonRpcError(null, "Invalid JSON-RPC payload", 400);
   }
 
-  try {
-    const upstream = await fetch(rpcUrl, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
+  const requestBody = JSON.stringify(payload);
 
-    const body = await upstream.text();
+  for (const rpcUrl of getRpcUrls()) {
+    try {
+      const upstream = await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: requestBody,
+        cache: "no-store",
+      });
 
-    return new NextResponse(body, {
-      status: upstream.status,
-      headers: { "content-type": upstream.headers.get("content-type") || "application/json" },
-    });
-  } catch {
-    return NextResponse.json({ error: "Unable to reach Sepolia RPC" }, { status: 502 });
+      const body = await upstream.text();
+      const contentType = upstream.headers.get("content-type") || "";
+
+      if (!upstream.ok || !contentType.includes("application/json")) {
+        continue;
+      }
+
+      return new NextResponse(body, {
+        status: upstream.status,
+        headers: { "content-type": contentType },
+      });
+    } catch {
+      continue;
+    }
   }
+
+  return jsonRpcError(payload, "Unable to reach Sepolia RPC");
 }
